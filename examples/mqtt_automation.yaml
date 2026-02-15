@@ -1,0 +1,54 @@
+# Example Home Assistant automation using MQTT to trigger music coordinator
+# This shows how to publish to the music-coordinator/play topic
+
+automation:
+  - alias: "Play Christmas Music in Garage via MQTT"
+    description: "Play Christmas music in garage when Christmas mode is enabled using MQTT"
+    trigger:
+      - platform: state
+        entity_id: input_boolean.christmas_mode
+        to: 'on'
+    condition:
+      - condition: state
+        entity_id: input_boolean.guest_mode
+        state: 'off'
+    action:
+      - service: mqtt.publish
+        data:
+          topic: "music-coordinator/play"
+          payload: |
+            {
+              "intent": "christmas",
+              "location": "loft"
+            }
+          qos: 0
+          retain: false
+
+# Alternative: Using a script for reusability
+script:
+  play_music_intent:
+    alias: "Play Music Intent via MQTT"
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: "music-coordinator/play"
+          payload_template: |
+            {
+              "intent": "{{ intent }}",
+              "location": "{{ location }}"
+            }
+          qos: 0
+
+# Then use in automations:
+automation:
+  - alias: "Play Music via Script"
+    trigger:
+      - platform: state
+        entity_id: input_boolean.christmas_mode
+        to: 'on'
+    action:
+      - service: script.play_music_intent
+        data:
+          intent: "christmas"
+          location: "garage"
+

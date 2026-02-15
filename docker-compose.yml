@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  music-coordinator:
+    build: .
+    container_name: music-coordinator
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+      - ./music_coordinator.db:/app/music_coordinator.db  # Optional: mount existing DB
+    environment:
+      - PORT=8080
+      - DB_PATH=/data/music_coordinator.db
+      - HA_URL=${HA_URL:-http://homeassistant.local:8123}
+      - HA_API_TOKEN=${HA_API_TOKEN}
+      - MA_API_URL=${MA_API_URL:-http://192.168.2.245:8097}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+

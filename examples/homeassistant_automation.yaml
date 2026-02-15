@@ -1,0 +1,130 @@
+# Example Home Assistant automation using the Music Intent Coordinator
+# Add this to your automations.yaml or create a new file in automation/ directory
+
+# Option 1: Using REST Command (Recommended)
+# First, add this to your configuration.yaml:
+# rest_command:
+#   play_music_intent:
+#     url: "http://music-coordinator:8080/play"
+#     method: POST
+#     headers:
+#       Content-Type: "application/json"
+#     payload: |
+#       {
+#         "intent": "{{ intent }}",
+#         "location": "{{ location }}"
+#       }
+
+# Example automation using REST command
+- alias: "Play Christmas Music in Garage"
+  description: "Play Christmas music in garage when Christmas mode is enabled"
+  trigger:
+    - platform: state
+      entity_id: input_boolean.christmas_mode
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: input_boolean.guest_mode
+      state: 'off'
+  action:
+    - service: rest_command.play_music_intent
+      data:
+        intent: "christmas"
+        location: "garage"
+
+# Example automation for Saturday morning music
+- alias: "Saturday Morning Music"
+  description: "Play Saturday morning playlist in whole house"
+  trigger:
+    - platform: time
+      at: "08:00:00"
+    - platform: time_pattern
+      hours: 8
+      minutes: 0
+  condition:
+    - condition: time
+      weekday:
+        - sat
+    - condition: state
+      entity_id: input_boolean.guest_mode
+      state: 'off'
+  action:
+    - service: rest_command.play_music_intent
+      data:
+        intent: "saturday_morning"
+        location: "whole_house"
+
+# Example automation for Sunday morning music
+- alias: "Sunday Morning Music"
+  description: "Play Sunday morning playlist in whole house"
+  trigger:
+    - platform: time
+      at: "08:00:00"
+  condition:
+    - condition: time
+      weekday:
+        - sun
+    - condition: state
+      entity_id: input_boolean.guest_mode
+      state: 'off'
+  action:
+    - service: rest_command.play_music_intent
+      data:
+        intent: "sunday_morning"
+        location: "whole_house"
+
+# Example automation for leaving alert
+- alias: "Leaving Alert Music"
+  description: "Play leaving alert music when someone is leaving"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.person_leaving
+      to: 'on'
+  action:
+    - service: rest_command.play_music_intent
+      data:
+        intent: "leaving_alert"
+        location: "whole_house"
+
+# Option 2: Using HTTP POST directly (Alternative)
+# If you prefer not to use REST command, you can use http.post service directly:
+- alias: "Play Music Intent (Direct HTTP)"
+  description: "Example using direct HTTP call"
+  trigger:
+    - platform: state
+      entity_id: input_boolean.christmas_mode
+      to: 'on'
+  action:
+    - service: http.post
+      data:
+        url: "http://music-coordinator:8080/api/play"
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        data:
+          intent: "christmas"
+          location: "garage"
+
+# Option 3: Using Script
+# Create a script in scripts/ directory:
+# play_music_intent:
+#   alias: "Play Music Intent"
+#   sequence:
+#     - service: rest_command.play_music_intent
+#       data:
+#         intent: "{{ intent }}"
+#         location: "{{ location }}"
+#
+# Then call it from automations:
+- alias: "Play Music via Script"
+  description: "Example using script"
+  trigger:
+    - platform: state
+      entity_id: input_boolean.christmas_mode
+      to: 'on'
+  action:
+    - service: script.play_music_intent
+      data:
+        intent: "christmas"
+        location: "garage"
+

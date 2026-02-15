@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Coordinator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 0 10px 10px 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-height: 500px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section-title {
+            color: #667eea;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+            font-size: 1.5em;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+        }
+
+        .form-section h3 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            font-family: monospace;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .message {
+            padding: 12px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #667eea;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .data-section {
+            margin-top: 30px;
+        }
+
+        .data-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .playlist-checkboxes {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background: white;
+        }
+
+        .playlist-checkboxes label {
+            display: block;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+            background: #f8f9fa;
+            font-weight: normal;
+        }
+
+        .playlist-checkboxes label:hover {
+            background: #e9ecef;
+        }
+
+        .playlist-checkboxes input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .media-players-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e7f3ff;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .media-players-info strong {
+            display: block;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .media-players-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .media-player-item {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            background: white;
+            margin-bottom: 5px;
+            border-radius: 3px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #e83e8c;
+        }
+
+        small {
+            color: #666;
+            font-size: 12px;
+            display: block;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                border-radius: 8px;
+                margin-bottom: 5px;
+            }
+
+            .tab-content {
+                border-radius: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Music Coordinator</h1>
+            <p>Manage your music intents, locations, and playlist groups</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('locations')">📍 Locations</button>
+            <button class="tab" onclick="switchTab('playlist-groups')">📋 Playlist Groups</button>
+            <button class="tab" onclick="switchTab('intents')">🎯 Intents</button>
+        </div>
+
+        <!-- Locations Tab -->
+        <div id="locations-tab" class="tab-content active">
+            <h2 class="section-title">Locations</h2>
+            <div id="location-message" class="message"></div>
+
+            <div class="form-section">
+                <h3>Add or Edit Location</h3>
+                <form id="location-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="location-name">Location Name</label>
+                            <input type="text" id="location-name" placeholder="e.g., garage" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="location-speaker">Speaker Entity</label>
+                            <select id="location-speaker" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px;">
+                                <option value="">Select or type...</option>
+                            </select>
+                            <input type="text" id="location-speaker-text" placeholder="Or type: e.g., media_player.garage" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; margin-top: 5px;">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Location</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadLocations()">Refresh</button>
+                    <button type="button" class="btn btn-success" onclick="syncLocations()">Sync from Home Assistant</button>
+                </form>
+            </div>
+
+            <div class="media-players-info">
+                <strong>Available Media Players from Home Assistant:</strong>
+                <div id="media-players-list" class="media-players-list">
+                    <em>Loading...</em>
+                </div>
+            </div>
+
+            <div class="data-section">
+                <h3>Existing Locations</h3>
+                <table id="locations-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Speaker Entity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Playlist Groups Tab -->
+        <div id="playlist-groups-tab" class="tab-content">
+            <h2 class="section-title">Playlist Groups</h2>
+            <div id="group-message" class="message"></div>
+
+            <div class="form-section">
+                <h3>Create or Edit Playlist Group</h3>
+                <form id="group-form">
+                    <div class="form-group">
+                        <label for="group-name">Group Name</label>
+                        <input type="text" id="group-name" placeholder="e.g., workout_mix" required>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="generateRandomGroupName()" style="margin-top: 5px;">Generate Random Name</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Select Playlists</label>
+                        <div id="playlist-checkboxes" class="playlist-checkboxes">
+                            <em>Loading available playlists...</em>
+                        </div>
+                        <small>Select multiple playlists. A random playlist from this group will be selected each time it's used.</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Group</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadPlaylistGroups()">Refresh</button>
+                </form>
+            </div>
+
+            <div class="data-section">
+                <h3>Existing Playlist Groups</h3>
+                <table id="groups-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Playlists</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Intents Tab -->
+        <div id="intents-tab" class="tab-content">
+            <h2 class="section-title">Intents</h2>
+            <div id="intent-message" class="message"></div>
+
+            <div class="form-section">
+                <h3>Create or Edit Intent</h3>
+                <form id="intent-form">
+                    <div class="form-group">
+                        <label for="intent-name">Intent Name</label>
+                        <input type="text" id="intent-name" placeholder="e.g., christmas" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Playlist Source</label>
+                        <select id="intent-type" onchange="toggleIntentType()" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; margin-bottom: 10px;">
+                            <option value="direct">Direct Playlists</option>
+                            <option value="group">Playlist Group</option>
+                        </select>
+                    </div>
+                    <div id="intent-direct-playlists" class="form-group">
+                        <label for="intent-playlists">Playlists (one per line)</label>
+                        <textarea id="intent-playlists" rows="4" placeholder="e.g., spotify:playlist:...&#10;spotify:playlist:...&#10;spotify:playlist:..."></textarea>
+                        <small>Enter multiple playlists (one per line). A random playlist will be selected each time this intent is used.</small>
+                    </div>
+                    <div id="intent-group-select" class="form-group" style="display: none;">
+                        <label for="intent-group-name">Playlist Group</label>
+                        <select id="intent-group-name" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px;">
+                            <option value="">Select a group...</option>
+                        </select>
+                        <small>Select a playlist group. A random playlist from the group will be selected each time this intent is used.</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Intent</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadIntents()">Refresh</button>
+                </form>
+            </div>
+
+            <div class="data-section">
+                <h3>Existing Intents</h3>
+                <table id="intents-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Playlist</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Auto-refresh data when switching tabs
+            switch(tabName) {
+                case 'locations':
+                    loadLocations();
+                    loadMediaPlayers();
+                    break;
+                case 'playlist-groups':
+                    loadPlaylistGroups();
+                    loadAvailablePlaylists();
+                    break;
+                case 'intents':
+                    loadIntents();
+                    break;
+            }
+        }
+
+        // Intent functions
+        async function loadIntents() {
+            try {
+                const response = await fetch(`${API_BASE}/intents`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                
+                if (!Array.isArray(data)) {
+                    if (data.error) throw new Error(data.error);
+                    throw new Error('Invalid response format');
+                }
+                
+                const tbody = document.querySelector('#intents-table tbody');
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999;">No intents found</td></tr>';
+                    return;
+                }
+
+                data.forEach(intent => {
+                    const row = tbody.insertRow();
+                    let playlistDisplay = '';
+                    if (intent.playlists && intent.playlists.length > 1) {
+                        playlistDisplay = `<span title="${escapeHtml(intent.playlists.join(', '))}">${intent.playlists.length} playlists (random)</span><br><small style="color: #666;">${escapeHtml(intent.playlists[0])}...</small>`;
+                    } else if (intent.playlist_group) {
+                        playlistDisplay = `<span style="color: #667eea;">Group: ${escapeHtml(intent.playlist_group)}</span>`;
+                    } else {
+                        const playlist = intent.playlist || (intent.playlists && intent.playlists[0]) || 'N/A';
+                        playlistDisplay = `<code>${escapeHtml(playlist)}</code>`;
+                    }
+                    
+                    row.innerHTML = `
+                        <td><strong>${escapeHtml(intent.name)}</strong></td>
+                        <td>${playlistDisplay}</td>
+                        <td class="actions">
+                            <button class="btn btn-primary btn-small" onclick="editIntent('${escapeHtml(intent.name)}', ${JSON.stringify(intent.playlists || [intent.playlist].filter(Boolean))}, '${escapeHtml(intent.playlist_group || '')}')">Edit</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteIntent('${escapeHtml(intent.name)}')">Delete</button>
+                        </td>
+                    `;
+                });
+            } catch (error) {
+                showMessage('intent-message', 'Error loading intents: ' + error.message, 'error');
+                const tbody = document.querySelector('#intents-table tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #e74c3c;">Error loading intents</td></tr>';
+                }
+            }
+        }
+
+        async function createIntent(name, playlists, playlistGroup) {
+            try {
+                const body = { name };
+                if (playlistGroup) {
+                    body.playlist_group = playlistGroup;
+                } else {
+                    body.playlists = playlists;
+                }
+                
+                const response = await fetch(`${API_BASE}/intents`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('intent-message', result.message, 'success');
+                    document.getElementById('intent-form').reset();
+                    toggleIntentType();
+                    loadIntents();
+                    loadAvailablePlaylists(); // Refresh available playlists after creating intent
+                } else {
+                    showMessage('intent-message', result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('intent-message', 'Error creating intent: ' + error.message, 'error');
+            }
+        }
+
+        async function updateIntent(name, playlists, playlistGroup) {
+            try {
+                const body = {};
+                if (playlistGroup) {
+                    body.playlist_group = playlistGroup;
+                } else {
+                    body.playlists = playlists;
+                }
+                
+                const response = await fetch(`${API_BASE}/intents/${encodeURIComponent(name)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('intent-message', result.message, 'success');
+                    document.getElementById('intent-form').reset();
+                    document.getElementById('intent-name').readOnly = false;
+                    toggleIntentType();
+                    loadIntents();
+                    loadAvailablePlaylists(); // Refresh available playlists after updating intent
+                } else {
+                    showMessage('intent-message', result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('intent-message', 'Error updating intent: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteIntent(name) {
+            if (!confirm(`Delete intent "${name}"?`)) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/intents/${encodeURIComponent(name)}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('intent-message', result.message, 'success');
+                    loadIntents();
+                    loadAvailablePlaylists(); // Refresh available playlists after deletion
+                } else {
+                    showMessage('intent-message', result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('intent-message', 'Error deleting intent: ' + error.message, 'error');
+            }
+        }
+
+        function editIntent(name, playlists, playlistGroup) {
+            document.getElementById('intent-name').value = name;
+            document.getElementById('intent-name').readOnly = true;
+            
+            if (playlistGroup) {
+                document.getElementById('intent-type').value = 'group';
+                toggleIntentType();
+                document.getElementById('intent-group-name').value = playlistGroup;
+            } else {
+                document.getElementById('intent-type').value = 'direct';
+                toggleIntentType();
+                const playlistsText = Array.isArray(playlists) ? playlists.join('\n') : playlists;
+                document.getElementById('intent-playlists').value = playlistsText;
+            }
+            
+            document.getElementById('intent-form').onsubmit = (e) => {
+                e.preventDefault();
+                const intentType = document.getElementById('intent-type').value;
+                if (intentType === 'group') {
+                    const groupName = document.getElementById('intent-group-name').value.trim();
+                    if (!groupName) {
+                        showMessage('intent-message', 'Please select a playlist group', 'error');
+                        return;
+                    }
+                    updateIntent(name, [], groupName);
+                } else {
+                    const playlistsText = document.getElementById('intent-playlists').value.trim();
+                    const playlists = playlistsText.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+                    updateIntent(name, playlists, '');
+                }
+            };
+        }
+
+        // Location functions
+        async function loadLocations() {
+            try {
+                const response = await fetch(`${API_BASE}/locations`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    let errorMsg = `HTTP error! status: ${response.status}`;
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        if (errorJson.error) errorMsg = errorJson.error;
+                    } catch (e) {
+                        if (errorText) errorMsg += ` - ${errorText}`;
+                    }
+                    throw new Error(errorMsg);
+                }
+                
+                const data = await response.json();
+                
+                if (!Array.isArray(data)) {
+                    if (data && data.error) throw new Error(data.error);
+                    if (data && data.success === false) throw new Error(data.error || 'Unknown error');
+                    throw new Error('Invalid response format: expected array, got ' + typeof data);
+                }
+                
+                const tbody = document.querySelector('#locations-table tbody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999;">No locations found</td></tr>';
+                    return;
+                }
+
+                data.forEach(location => {
+                    if (!location || !location.name || !location.speaker_entity) return;
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td><strong>${escapeHtml(location.name)}</strong></td>
+                        <td><code>${escapeHtml(location.speaker_entity)}</code></td>
+                        <td class="actions">
+                            <button class="btn btn-primary btn-small" onclick="editLocation('${escapeHtml(location.name)}', '${escapeHtml(location.speaker_entity)}')">Edit</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteLocation('${escapeHtml(location.name)}')">Delete</button>
+                        </td>
+                    `;
+                });
+            } catch (error) {
+                showMessage('location-message', 'Error loading locations: ' + error.message, 'error');
+                const tbody = document.querySelector('#locations-table tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #e74c3c;">Error loading locations</td></tr>';
+                }
+            }
+        }
+
+        async function createLocation(name, speakerEntity) {
+            try {
+                const response = await fetch(`${API_BASE}/locations`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, speaker_entity: speakerEntity })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('location-message', result.message, 'success');
+                    document.getElementById('location-form').reset();
+                    loadLocations();
+                } else {
+                    showMessage('location-message', result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('location-message', 'Error creating location: ' + error.message, 'error');
+            }
+        }
+
+        async function updateLocation(name, speakerEntity) {
+            try {
+                const response = await fetch(`${API_BASE}/locations/${encodeURIComponent(name)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ speaker_entity: speakerEntity })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('location-message', result.message, 'success');
+                    document.getElementById('location-form').reset();
+                    document.getElementById('location-name').readOnly = false;
+                    loadLocations();
+                } else {
+                    showMessage('location-message', result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('location-message', 'Error updating location: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteLocation(name) {
+            if (!confirm(`Delete location "${name}"?`)) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/locations/${encodeURIComponent(name)}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('location-message', result.message, 'success');
+                    loadLocations();
+                } else {
+                    showMessage('location-message', result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('location-message', 'Error deleting location: ' + error.message, 'error');
+            }
+        }
+
+        function editLocation(name, speakerEntity) {
+            document.getElementById('location-name').value = name;
+            document.getElementById('location-name').readOnly = true;
+            document.getElementById('location-speaker').value = speakerEntity;
+            document.getElementById('location-speaker-text').value = speakerEntity;
+            document.getElementById('location-form').onsubmit = (e) => {
+                e.preventDefault();
+                const speakerSelect = document.getElementById('location-speaker').value.trim();
+                const speakerText = document.getElementById('location-speaker-text').value.trim();
+                const speaker = speakerText || speakerSelect;
+                updateLocation(name, speaker);
+            };
+        }
+
+        // Utility functions
+        function showMessage(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = `message ${type}`;
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 5000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Media player functions
+        async function loadMediaPlayers() {
+            try {
+                const response = await fetch(`${API_BASE}/media-players`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                
+                if (!Array.isArray(data)) {
+                    if (data.error) throw new Error(data.error);
+                    throw new Error('Invalid response format');
+                }
+                
+                const select = document.getElementById('location-speaker');
+                const listDiv = document.getElementById('media-players-list');
+                
+                if (!select || !listDiv) return;
+                
+                select.innerHTML = '<option value="">Select or type...</option>';
+                
+                data.forEach(mp => {
+                    const option = document.createElement('option');
+                    option.value = mp.entity_id;
+                    option.textContent = `${mp.name} (${mp.entity_id})`;
+                    select.appendChild(option);
+                });
+                
+                if (data.length === 0) {
+                    listDiv.innerHTML = '<em>No media players found</em>';
+                } else {
+                    listDiv.innerHTML = data.map(mp => 
+                        `<div class="media-player-item">
+                            <strong>${escapeHtml(mp.name)}</strong><br>
+                            <code>${escapeHtml(mp.entity_id)}</code>
+                            ${mp.device_name ? `<br><small>Device: ${escapeHtml(mp.device_name)}</small>` : ''}
+                        </div>`
+                    ).join('');
+                }
+            } catch (error) {
+                const listDiv = document.getElementById('media-players-list');
+                if (listDiv) {
+                    listDiv.innerHTML = `<em style="color: #e74c3c;">Error loading media players: ${escapeHtml(error.message)}</em>`;
+                }
+            }
+        }
+
+        async function syncLocations() {
+            if (!confirm('This will create locations for all media players from Home Assistant that don\'t already exist. Continue?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/sync-locations`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    let errorMsg = `HTTP error! status: ${response.status}`;
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        if (errorJson.error) errorMsg = errorJson.error;
+                    } catch (e) {
+                        if (errorText) errorMsg += ` - ${errorText}`;
+                    }
+                    throw new Error(errorMsg);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('location-message', result.message, 'success');
+                    setTimeout(() => {
+                        loadLocations();
+                        loadMediaPlayers();
+                    }, 500);
+                } else {
+                    showMessage('location-message', result.error || 'Unknown error occurred', 'error');
+                }
+            } catch (error) {
+                showMessage('location-message', 'Error syncing locations: ' + error.message, 'error');
+            }
+        }
+
+        document.getElementById('location-speaker').onchange = function() {
+            if (this.value) {
+                document.getElementById('location-speaker-text').value = this.value;
+            }
+        };
+
+        // Playlist Group functions
+        async function loadAvailablePlaylists() {
+            try {
+                const response = await fetch(`${API_BASE}/available-playlists`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const playlists = await response.json();
+                
+                const container = document.getElementById('playlist-checkboxes');
+                if (!container) return;
+                
+                if (!Array.isArray(playlists) || playlists.length === 0) {
+                    container.innerHTML = '<em style="color: #999;">No playlists available. Add some playlists to intents or groups first.</em>';
+                    return;
+                }
+                
+                container.innerHTML = playlists.map(playlist => `
+                    <label>
+                        <input type="checkbox" value="${escapeHtml(playlist)}">
+                        <code>${escapeHtml(playlist)}</code>
+                    </label>
+                `).join('');
+            } catch (error) {
+                const container = document.getElementById('playlist-checkboxes');
+                if (container) {
+                    container.innerHTML = `<em style="color: #e74c3c;">Error loading playlists: ${escapeHtml(error.message)}</em>`;
+                }
+            }
+        }
+
+        function generateRandomGroupName() {
+            const adjectives = ['cool', 'epic', 'awesome', 'rad', 'sweet', 'chill', 'vibe', 'groovy', 'funky', 'smooth'];
+            const nouns = ['mix', 'jam', 'vibe', 'tune', 'beat', 'sound', 'flow', 'groove', 'rhythm', 'wave'];
+            const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+            const randomNum = Math.floor(Math.random() * 1000);
+            document.getElementById('group-name').value = `${randomAdj}_${randomNoun}_${randomNum}`;
+        }
+
+        async function loadPlaylistGroups() {
+            try {
+                const [groupsResponse, availableResponse] = await Promise.all([
+                    fetch(`${API_BASE}/playlist-groups`),
+                    fetch(`${API_BASE}/available-playlists`)
+                ]);
+                
+                if (!groupsResponse.ok) throw new Error(`HTTP error! status: ${groupsResponse.status}`);
+                const groups = await groupsResponse.json();
+                
+                const availablePlaylists = availableResponse.ok ? await availableResponse.json() : [];
+                const availableSet = new Set(availablePlaylists);
+                
+                const tbody = document.querySelector('#groups-table tbody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                
+                if (!Array.isArray(groups) || groups.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999;">No playlist groups found</td></tr>';
+                    return;
+                }
+                
+                groups.forEach(group => {
+                    const row = tbody.insertRow();
+                    let playlistsText = 'No playlists';
+                    let hasOrphaned = false;
+                    
+                    if (Array.isArray(group.playlists) && group.playlists.length > 0) {
+                        playlistsText = group.playlists.map(p => {
+                            const isOrphaned = !availableSet.has(p);
+                            if (isOrphaned) hasOrphaned = true;
+                            return `<code style="${isOrphaned ? 'background: #fff3cd; color: #856404;' : ''}">${escapeHtml(p)}</code>`;
+                        }).join(', ');
+                    }
+                    
+                    const orphanedWarning = hasOrphaned 
+                        ? '<br><small style="color: #856404;">⚠ Contains orphaned playlists - edit to remove</small>' 
+                        : '';
+                    
+                    row.innerHTML = `
+                        <td><strong>${escapeHtml(group.name)}</strong></td>
+                        <td>${playlistsText}${orphanedWarning}</td>
+                        <td class="actions">
+                            <button class="btn btn-primary btn-small" onclick="editPlaylistGroup('${escapeHtml(group.name)}')">Edit</button>
+                            <button class="btn btn-danger btn-small" onclick="deletePlaylistGroup('${escapeHtml(group.name)}')">Delete</button>
+                        </td>
+                    `;
+                });
+                
+                const intentGroupSelect = document.getElementById('intent-group-name');
+                if (intentGroupSelect) {
+                    intentGroupSelect.innerHTML = '<option value="">Select a group...</option>';
+                    groups.forEach(group => {
+                        const option = document.createElement('option');
+                        option.value = group.name;
+                        option.textContent = group.name;
+                        intentGroupSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                showMessage('group-message', 'Error loading groups: ' + error.message, 'error');
+            }
+        }
+
+        async function createPlaylistGroup(name, playlists) {
+            try {
+                const response = await fetch(`${API_BASE}/playlist-groups`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, playlists })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('group-message', result.message, 'success');
+                    document.getElementById('group-form').reset();
+                    loadPlaylistGroups();
+                    loadAvailablePlaylists();
+                } else {
+                    showMessage('group-message', result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('group-message', 'Error creating group: ' + error.message, 'error');
+            }
+        }
+
+        async function updatePlaylistGroup(name, playlists) {
+            try {
+                const response = await fetch(`${API_BASE}/playlist-groups/${encodeURIComponent(name)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ playlists })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('group-message', result.message, 'success');
+                    document.getElementById('group-form').reset();
+                    document.getElementById('group-name').readOnly = false;
+                    loadPlaylistGroups();
+                    loadAvailablePlaylists();
+                } else {
+                    showMessage('group-message', result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('group-message', 'Error updating group: ' + error.message, 'error');
+            }
+        }
+
+        async function deletePlaylistGroup(name) {
+            if (!confirm(`Delete playlist group "${name}"?`)) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/playlist-groups/${encodeURIComponent(name)}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('group-message', result.message, 'success');
+                    loadPlaylistGroups();
+                    loadAvailablePlaylists();
+                } else {
+                    showMessage('group-message', result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('group-message', 'Error deleting group: ' + error.message, 'error');
+            }
+        }
+
+        async function editPlaylistGroup(name) {
+            try {
+                const response = await fetch(`${API_BASE}/playlist-groups/${encodeURIComponent(name)}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const group = await response.json();
+                
+                document.getElementById('group-name').value = group.name;
+                document.getElementById('group-name').readOnly = true;
+                
+                // Get available playlists
+                const availableResponse = await fetch(`${API_BASE}/available-playlists`);
+                const availablePlaylists = availableResponse.ok ? await availableResponse.json() : [];
+                const availableSet = new Set(availablePlaylists);
+                
+                // Combine available playlists with group playlists (to show orphaned ones)
+                const allPlaylistsSet = new Set();
+                availablePlaylists.forEach(p => allPlaylistsSet.add(p));
+                if (group.playlists && Array.isArray(group.playlists)) {
+                    group.playlists.forEach(p => allPlaylistsSet.add(p));
+                }
+                
+                // Sort playlists (orphaned ones first, then available)
+                const allPlaylists = Array.from(allPlaylistsSet).sort((a, b) => {
+                    const aOrphaned = !availableSet.has(a);
+                    const bOrphaned = !availableSet.has(b);
+                    if (aOrphaned && !bOrphaned) return -1;
+                    if (!aOrphaned && bOrphaned) return 1;
+                    return a.localeCompare(b);
+                });
+                
+                // Rebuild checkbox list with all playlists
+                const container = document.getElementById('playlist-checkboxes');
+                container.innerHTML = allPlaylists.map(playlist => {
+                    const isOrphaned = !availableSet.has(playlist);
+                    const isChecked = group.playlists && group.playlists.includes(playlist);
+                    return `
+                        <label style="${isOrphaned ? 'background: #fff3cd; border-color: #ffc107;' : ''}">
+                            <input type="checkbox" value="${escapeHtml(playlist)}" ${isChecked ? 'checked' : ''}>
+                            <code>${escapeHtml(playlist)}</code>
+                            ${isOrphaned ? '<span style="color: #856404; font-size: 11px; margin-left: 8px;">(orphaned)</span>' : ''}
+                        </label>
+                    `;
+                }).join('');
+                
+                document.getElementById('group-form').onsubmit = (e) => {
+                    e.preventDefault();
+                    const selectedPlaylists = Array.from(document.querySelectorAll('#playlist-checkboxes input[type="checkbox"]:checked'))
+                        .map(cb => cb.value);
+                    if (selectedPlaylists.length === 0) {
+                        showMessage('group-message', 'Please select at least one playlist', 'error');
+                        return;
+                    }
+                    updatePlaylistGroup(name, selectedPlaylists);
+                };
+            } catch (error) {
+                showMessage('group-message', 'Error loading group: ' + error.message, 'error');
+            }
+        }
+
+        function toggleIntentType() {
+            const intentType = document.getElementById('intent-type').value;
+            const directDiv = document.getElementById('intent-direct-playlists');
+            const groupDiv = document.getElementById('intent-group-select');
+            
+            if (intentType === 'group') {
+                directDiv.style.display = 'none';
+                groupDiv.style.display = 'block';
+                document.getElementById('intent-playlists').removeAttribute('required');
+                document.getElementById('intent-group-name').setAttribute('required', 'required');
+            } else {
+                directDiv.style.display = 'block';
+                groupDiv.style.display = 'none';
+                document.getElementById('intent-playlists').setAttribute('required', 'required');
+                document.getElementById('intent-group-name').removeAttribute('required');
+            }
+        }
+
+        // Initialize on page load - only load data for the active tab (Locations)
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLocations();
+            loadMediaPlayers();
+            
+            document.getElementById('group-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('group-name').value.trim();
+                if (!name) {
+                    showMessage('group-message', 'Group name is required', 'error');
+                    return;
+                }
+                const selectedPlaylists = Array.from(document.querySelectorAll('#playlist-checkboxes input[type="checkbox"]:checked'))
+                    .map(cb => cb.value);
+                if (selectedPlaylists.length === 0) {
+                    showMessage('group-message', 'Please select at least one playlist', 'error');
+                    return;
+                }
+                createPlaylistGroup(name, selectedPlaylists);
+            });
+            
+            document.getElementById('intent-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('intent-name').value.trim();
+                const intentType = document.getElementById('intent-type').value;
+                
+                if (intentType === 'group') {
+                    const groupName = document.getElementById('intent-group-name').value.trim();
+                    if (!groupName) {
+                        showMessage('intent-message', 'Please select a playlist group', 'error');
+                        return;
+                    }
+                    createIntent(name, [], groupName);
+                } else {
+                    const playlistsText = document.getElementById('intent-playlists').value.trim();
+                    if (!playlistsText) {
+                        showMessage('intent-message', 'Please enter at least one playlist', 'error');
+                        return;
+                    }
+                    const playlists = playlistsText.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+                    createIntent(name, playlists, '');
+                }
+            });
+            
+            document.getElementById('location-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('location-name').value.trim();
+                const speakerSelect = document.getElementById('location-speaker').value.trim();
+                const speakerText = document.getElementById('location-speaker-text').value.trim();
+                const speaker = speakerText || speakerSelect;
+                if (name && speaker) {
+                    createLocation(name, speaker);
+                } else {
+                    showMessage('location-message', 'Please provide both name and speaker entity', 'error');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
