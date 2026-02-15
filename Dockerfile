@@ -1,5 +1,7 @@
 FROM golang:1.23-alpine AS builder
 
+RUN apk --no-cache add gcc musl-dev
+
 WORKDIR /app
 
 # Copy go mod files
