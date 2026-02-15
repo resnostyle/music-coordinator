@@ -18,12 +18,12 @@ import (
 )
 
 const (
-	defaultPort         = "8082"
+	defaultPort         = "8080"
 	defaultDBPath       = "./music_coordinator.db"
-	defaultHAURL        = "https://ha.bryanwp.com"
+	defaultHAURL        = "http://homeassistant.local:8123"
 	defaultHAToken      = ""
-	defaultMAAPIURL     = "http://192.168.2.245:8097"
-	defaultMQTTBroker   = "mqtt.p.bryanwp.com:1883"
+	defaultMAAPIURL     = "http://localhost:8097"
+	defaultMQTTBroker   = "tcp://localhost:1883"
 	defaultMQTTUser     = ""
 	defaultMQTTPass     = ""
 	defaultMQTTClientID = "music-coordinator"

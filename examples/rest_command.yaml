@@ -9,7 +9,7 @@ rest_command:
     # If running in Docker on same network, use service name:
     # url: "http://music-coordinator:8080/play"
     # If running on different host, use IP or hostname:
-    # url: "http://192.168.2.100:8080/play"
+    # url: "http://YOUR_HOST_IP:8080/play"
     method: POST
     headers:
       Content-Type: "application/json"

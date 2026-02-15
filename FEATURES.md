@@ -6,9 +6,9 @@ The coordinator supports multiple playlists per intent with automatic random sel
 
 ### How It Works
 
-1. **Define Multiple Playlists**: When creating or editing an intent, you can enter multiple playlists (one per line in the textarea)
-2. **Random Selection**: Each time the intent is triggered, the coordinator randomly selects one playlist from the group
-3. **Backward Compatible**: Single playlists still work - the system automatically detects the format
+1. **Define Multiple Playlists**: When creating or editing an intent, you can enter multiple playlists (one per line in the web UI)
+2. **Random Selection**: Each time the intent is triggered, the coordinator randomly selects one playlist from the list
+3. **Backward Compatible**: Single playlists still work -- the system automatically detects the format
 
 ### Example Use Cases
 
@@ -16,11 +16,19 @@ The coordinator supports multiple playlists per intent with automatic random sel
 - **Workout Music**: Different workout playlists for variety
 - **Morning Music**: Multiple morning playlists to keep things fresh
 
+### Playlist Groups
+
+Playlist groups let you define a named set of playlists that can be shared across multiple intents:
+
+1. Create a group (e.g., "holiday_mix") with several playlists
+2. Assign the group to one or more intents
+3. When triggered, a random playlist from the group is selected
+
 ### Database Format
 
 Playlists are stored as a JSON array in the database:
 ```json
-["spotify:playlist:abc123", "spotify:playlist:def456", "spotify:playlist:ghi789"]
+["spotify:playlist:PLAYLIST_ID_1", "spotify:playlist:PLAYLIST_ID_2", "spotify:playlist:PLAYLIST_ID_3"]
 ```
 
 The system also supports:
@@ -35,10 +43,18 @@ When creating/updating an intent via API:
 {
   "name": "christmas",
   "playlists": [
-    "spotify:playlist:37i9dQZF1DXdd3gw5QVjt9",
-    "spotify:playlist:37i9dQZF1DX3Ogo9pFvBkY",
-    "spotify:playlist:37i9dQZF1DXa1rZf8gLhyz"
+    "spotify:playlist:PLAYLIST_ID_1",
+    "spotify:playlist:PLAYLIST_ID_2",
+    "spotify:playlist:PLAYLIST_ID_3"
   ]
+}
+```
+
+Or use a playlist group:
+```json
+{
+  "name": "christmas",
+  "playlist_group": "holiday_mix"
 }
 ```
 
@@ -46,7 +62,7 @@ Or use the legacy single playlist format (still supported):
 ```json
 {
   "name": "christmas",
-  "playlist": "spotify:playlist:37i9dQZF1DXdd3gw5QVjt9"
+  "playlist": "spotify:playlist:PLAYLIST_ID_1"
 }
 ```
 
@@ -54,19 +70,14 @@ Or use the legacy single playlist format (still supported):
 
 In the web UI:
 1. Enter the intent name
-2. In the "Playlists" textarea, enter one playlist per line:
-   ```
-   spotify:playlist:37i9dQZF1DXdd3gw5QVjt9
-   spotify:playlist:37i9dQZF1DX3Ogo9pFvBkY
-   spotify:playlist:37i9dQZF1DXa1rZf8gLhyz
-   ```
-3. Click "Add Intent"
-4. Each time this intent is used, a random playlist will be selected
+2. Choose "Direct Playlists" or "Playlist Group" as the source
+3. For direct playlists, enter one playlist URI per line
+4. Click "Save Intent"
+5. Each time this intent is used, a random playlist will be selected
 
 ### Logging
 
 The coordinator logs which playlist was randomly selected:
 ```
-[DB] Found 3 playlists for intent 'christmas', randomly selected: spotify:playlist:37i9dQZF1DX3Ogo9pFvBkY (index 1)
+[DB] Found 3 playlists for intent 'christmas', randomly selected: spotify:playlist:PLAYLIST_ID_2 (index 1)
 ```
-

@@ -1,0 +1,29 @@
+[tools]
+go = "1.23"
+hk = "latest"
+"go:golang.org/x/tools/cmd/goimports" = "latest"
+
+[tasks.build]
+description = "Build the binary"
+run = "go build -o music-coordinator ."
+
+[tasks.run]
+description = "Build and run the service"
+depends = ["build"]
+run = "./music-coordinator"
+
+[tasks.test]
+description = "Run tests"
+run = "go test -v ./..."
+
+[tasks.fmt]
+description = "Format Go code"
+run = "goimports -w ."
+
+[tasks.lint]
+description = "Run go vet"
+run = "go vet ./..."
+
+[tasks.clean]
+description = "Remove build artifacts"
+run = "rm -f music-coordinator"

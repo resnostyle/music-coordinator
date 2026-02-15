@@ -1,0 +1,35 @@
+amends "package://github.com/jdx/hk/releases/download/v1.36.0/hk@1.36.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.36.0/hk@1.36.0#/Builtins.pkl"
+
+hooks {
+  ["pre-commit"] {
+    fix = true
+    stash = "git"
+    steps {
+      ["go-imports"] = Builtins.go_imports
+      ["go-vet"] = Builtins.go_vet
+      ["gomod-tidy"] = Builtins.gomod_tidy
+      ["trailing-whitespace"] = Builtins.trailing_whitespace
+      ["newlines"] = Builtins.newlines
+    }
+  }
+  ["fix"] {
+    fix = true
+    steps {
+      ["go-imports"] = Builtins.go_imports
+      ["go-vet"] = Builtins.go_vet
+      ["gomod-tidy"] = Builtins.gomod_tidy
+      ["trailing-whitespace"] = Builtins.trailing_whitespace
+      ["newlines"] = Builtins.newlines
+    }
+  }
+  ["check"] {
+    steps {
+      ["go-imports"] = Builtins.go_imports
+      ["go-vet"] = Builtins.go_vet
+      ["gomod-tidy"] = Builtins.gomod_tidy
+      ["trailing-whitespace"] = Builtins.trailing_whitespace
+      ["newlines"] = Builtins.newlines
+    }
+  }
+}

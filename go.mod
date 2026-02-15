@@ -1,6 +1,6 @@
-module github.com/bryanwp/music-coordinator
+module github.com/music-coordinator/music-coordinator
 
-go 1.18
+go 1.23
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.4.3

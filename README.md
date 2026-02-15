@@ -16,7 +16,7 @@ A centralized music intent coordinator for home automation that eliminates dupli
 │  Home Assistant │
 │   Automations   │
 └────────┬────────┘
-         │ HTTP POST
+         │ MQTT / HTTP POST
          │ {intent: "christmas", location: "garage"}
          ▼
 ┌─────────────────┐
@@ -28,9 +28,9 @@ A centralized music intent coordinator for home automation that eliminates dupli
     │         │
     ▼         ▼
 ┌────────┐ ┌──────────────┐
-│ SQLite │ │ Home        │
-│   DB   │ │ Assistant   │
-│        │ │ API         │
+│ SQLite │ │ Home         │
+│   DB   │ │ Assistant    │
+│        │ │ (via MQTT)   │
 └────────┘ └──────────────┘
 ```
 
@@ -38,62 +38,67 @@ A centralized music intent coordinator for home automation that eliminates dupli
 
 ### SQLite Database
 
-Two tables:
-- **intent**: Maps intent names to playlists (supports multiple playlists per intent)
-  - `name` (TEXT, UNIQUE): Intent identifier (e.g., "christmas", "saturday_morning")
-  - `playlist` (TEXT): Playlist URI(s) stored as JSON array - supports multiple playlists for random selection
+- **intent**: Maps intent names to playlists (supports multiple playlists per intent with random selection)
+  - `name` (TEXT, UNIQUE): Intent identifier (e.g., "christmas", "workout")
+  - `playlist` (TEXT): Playlist URI(s) stored as JSON array
 - **location**: Maps location names to speaker entities
   - `name` (TEXT, UNIQUE): Location identifier (e.g., "garage", "living_room")
   - `speaker_entity` (TEXT): Home Assistant media player entity ID
+- **playlist_group**: Named groups of playlists for reuse across intents
 
 ### Coordinator Service (Go)
 
-- **MQTT-based communication**: Listens for play requests on MQTT topic `music-coordinator/play`
-- **HTTP API**: Web UI and REST API for CRUD operations (still available)
-- Looks up playlist and speaker entity in SQLite
-- Publishes play commands to Home Assistant via MQTT
-- Stateless; DB is the authoritative state
+- **MQTT-based communication**: Listens for play requests on `music-coordinator/play` and publishes commands to Home Assistant via MQTT
+- **HTTP API**: REST API for CRUD operations and a web UI for management
+- **Stateless**: SQLite DB is the authoritative state
 
 ## Setup
 
 ### Prerequisites
 
-- Go 1.21 or later
+- [mise](https://mise.jdx.dev/) (recommended) or Go 1.23+
 - Home Assistant with Music Assistant (mass) integration
-- Home Assistant API token
+- An MQTT broker (e.g., Mosquitto)
+- Home Assistant API token (for media player sync feature)
 
 ### Installation
 
-1. Clone or navigate to the music-coordinator directory:
 ```bash
+git clone https://github.com/YOUR_USERNAME/music-coordinator.git
 cd music-coordinator
-```
 
-2. Install dependencies:
-```bash
+# Using mise (recommended)
+mise install
+mise run build
+
+# Or manually
 go mod download
+go build -o music-coordinator .
 ```
 
-3. Set environment variables:
+### Configuration
+
+Set environment variables (or use a `.env` file with Docker):
+
 ```bash
-export HA_API_TOKEN="your-home-assistant-long-lived-access-token"
-export HA_URL="http://homeassistant.local:8123"  # or your HA URL
-export PORT="8080"  # optional, defaults to 8080
-export DB_PATH="./music_coordinator.db"  # optional, defaults to ./music_coordinator.db
+export MQTT_BROKER="tcp://localhost:1883"        # Required
+export MQTT_USER=""                               # Optional
+export MQTT_PASS=""                               # Optional
+export HA_URL="http://homeassistant.local:8123"   # For media player sync
+export HA_API_TOKEN="your-long-lived-token"       # For media player sync
+export PORT="8080"                                # Optional, defaults to 8080
+export DB_PATH="./music_coordinator.db"           # Optional
 ```
 
-4. Build and run:
+### Run
+
 ```bash
-go build -o music-coordinator
+# Using mise
+mise run run
+
+# Or directly
 ./music-coordinator
 ```
-
-Or run directly:
-```bash
-go run main.go
-```
-
-### Initialize Database
 
 The database schema is automatically created on first run. To populate with example data:
 
@@ -101,78 +106,24 @@ The database schema is automatically created on first run. To populate with exam
 sqlite3 music_coordinator.db < init_db.sql
 ```
 
-Or manually add entries:
-```sql
-INSERT INTO intent (name, playlist) VALUES ('christmas', 'spotify:user:spotify:playlist:37i9dQZF1DXdd3gw5QVjt9');
-INSERT INTO location (name, speaker_entity) VALUES ('garage', 'media_player.garage');
-```
-
 ## Web UI
 
-The coordinator includes a simple web-based CRUD interface for managing intents and locations.
+Once running, open `http://localhost:8080/` in your browser to:
 
-### Access the UI
-
-Once the service is running, open your browser and navigate to:
-```
-http://localhost:8080/
-```
-
-### Features
-
-- **View all intents and locations** in a clean table format
-- **Create new intents** with multiple playlists - Enter multiple playlists (one per line) and the system will randomly select one each time
-- **Create new locations** by entering a name and speaker entity ID
-- **Edit existing entries** by clicking the "Edit" button
-- **Delete entries** by clicking the "Delete" button (with confirmation)
-- **Sync locations from Home Assistant** - Automatically fetch all media players from Home Assistant and create locations for them
-- **Browse available media players** - See all media players from Home Assistant in a dropdown and list
-- **Random playlist selection** - When an intent has multiple playlists, one is randomly selected each time the intent is used
-
-The UI automatically refreshes after create/update/delete operations.
+- **Manage intents** with support for multiple playlists and playlist groups
+- **Manage locations** with speaker entity mapping
+- **Sync locations** from Home Assistant media players automatically
+- **Manage playlist groups** for reusable sets of playlists
 
 ## Usage
 
-### MQTT Communication
+### MQTT Communication (Primary)
 
-The coordinator uses MQTT for all music playback commands. This provides better integration with Home Assistant and eliminates the need for HTTP API tokens.
+The coordinator listens for play requests via MQTT:
 
-#### Subscribe to Play Requests
+- **Listen topic**: `music-coordinator/play`
+- **Publish topic**: `homeassistant/service/mass/play_media`
 
-The coordinator automatically subscribes to:
-- **Topic**: `music-coordinator/play`
-- **QoS**: 0
-- **Message Format**: JSON
-  ```json
-  {
-    "intent": "christmas",
-    "location": "garage"
-  }
-  ```
-
-#### Publish Play Commands to Home Assistant
-
-The coordinator publishes play commands to:
-- **Topic**: `homeassistant/service/mass/play_media`
-- **QoS**: 0
-- **Message Format**: JSON
-  ```json
-  {
-    "entity_id": "media_player.garage",
-    "media_id": "spotify:playlist:37i9dQZF1DXdd3gw5QVjt9",
-    "media_type": "playlist"
-  }
-  ```
-
-### HTTP API Endpoints (Web UI)
-
-The HTTP API is still available for the web UI and CRUD operations:
-
-#### Play Music (HTTP)
-
-**POST** `/api/play`
-
-Request body:
 ```json
 {
   "intent": "christmas",
@@ -180,85 +131,41 @@ Request body:
 }
 ```
 
-Response (success):
+### HTTP API
+
+#### Play Music
+
+**POST** `/api/play`
+
 ```json
 {
-  "success": true,
-  "message": "Playing intent 'christmas' on 'garage' (playlist: spotify:user:spotify:playlist:37i9dQZF1DXdd3gw5QVjt9, speaker: media_player.garage)"
+  "intent": "christmas",
+  "location": "garage"
 }
 ```
 
-Response (error):
-```json
-{
-  "success": false,
-  "error": "Intent not found: intent 'unknown' not found"
-}
-```
+#### CRUD Endpoints
 
-### CRUD API Endpoints
+| Resource | List | Get | Create | Update | Delete |
+|----------|------|-----|--------|--------|--------|
+| Intents | `GET /api/intents` | `GET /api/intents/{name}` | `POST /api/intents` | `PUT /api/intents/{name}` | `DELETE /api/intents/{name}` |
+| Locations | `GET /api/locations` | `GET /api/locations/{name}` | `POST /api/locations` | `PUT /api/locations/{name}` | `DELETE /api/locations/{name}` |
+| Playlist Groups | `GET /api/playlist-groups` | `GET /api/playlist-groups/{name}` | `POST /api/playlist-groups` | `PUT /api/playlist-groups/{name}` | `DELETE /api/playlist-groups/{name}` |
 
-#### Intents
+#### Other Endpoints
 
-- **GET** `/api/intents` - List all intents
-- **GET** `/api/intents/{name}` - Get a specific intent
-- **POST** `/api/intents` - Create a new intent
-  ```json
-  {
-    "name": "christmas",
-    "playlist": "spotify:playlist:37i9dQZF1DXdd3gw5QVjt9"
-  }
-  ```
-- **PUT** `/api/intents/{name}` - Update an intent
-  ```json
-  {
-    "playlist": "spotify:playlist:NEW_ID"
-  }
-  ```
-- **DELETE** `/api/intents/{name}` - Delete an intent
-
-#### Locations
-
-- **GET** `/api/locations` - List all locations
-- **GET** `/api/locations/{name}` - Get a specific location
-- **POST** `/api/locations` - Create a new location
-  ```json
-  {
-    "name": "garage",
-    "speaker_entity": "media_player.garage"
-  }
-  ```
-- **PUT** `/api/locations/{name}` - Update a location
-  ```json
-  {
-    "speaker_entity": "media_player.new_speaker"
-  }
-  ```
-- **DELETE** `/api/locations/{name}` - Delete a location
-
-#### Media Players & Sync
-
-- **GET** `/api/media-players` - Get all media player entities from Home Assistant
-  Returns a list of media players with entity_id, name, state, and device_name
-- **POST** `/api/sync-locations` - Sync locations from Home Assistant
-  Automatically creates locations for all media players that don't already exist.
-  Location names are derived from entity IDs (e.g., `media_player.garage` → `garage`)
-
-### Health Check
-
-**GET** `/health`
-
-Returns `200 OK` if the service is running.
+- `GET /api/media-players` -- List media players from Home Assistant
+- `POST /api/sync-locations` -- Auto-create locations from Home Assistant media players
+- `GET /api/available-playlists` -- List all known playlist URIs
+- `GET /health` -- Health check
 
 ## Home Assistant Integration
 
 ### Using MQTT (Recommended)
 
-The coordinator listens for play requests on MQTT topic `music-coordinator/play`:
-
 ```yaml
 automation:
-  - alias: "Play Christmas Music in Garage"
+  - alias: "Play Christmas Music"
     trigger:
       - platform: state
         entity_id: input_boolean.christmas_mode
@@ -274,32 +181,7 @@ automation:
             }
 ```
 
-See `examples/mqtt_automation.yaml` for more examples.
-
-### Using HTTP API (Alternative)
-
-You can still use HTTP API if preferred:
-
-```yaml
-automation:
-  - alias: "Play Christmas Music in Garage"
-    trigger:
-      - platform: state
-        entity_id: input_boolean.christmas_mode
-        to: 'on'
-    action:
-      - service: http.post
-        data:
-          url: "http://music-coordinator:8080/api/play"
-          method: POST
-          headers:
-            Content-Type: "application/json"
-          data:
-            intent: "christmas"
-            location: "garage"
-```
-
-### Using REST Command (Recommended)
+### Using REST Command
 
 Add to `configuration.yaml`:
 
@@ -317,105 +199,22 @@ rest_command:
       }
 ```
 
-Then use in automations:
-
-```yaml
-automation:
-  - alias: "Play Christmas Music in Garage"
-    trigger:
-      - platform: state
-        entity_id: input_boolean.christmas_mode
-        to: 'on'
-    action:
-      - service: rest_command.play_music_intent
-        data:
-          intent: "christmas"
-          location: "garage"
-```
-
-## Database Management
-
-### Using the Web UI (Recommended)
-
-The easiest way to manage the database is through the web UI at `http://localhost:8080/`:
-
-1. **Sync Locations from Home Assistant**: Click the "Sync from Home Assistant" button to automatically create locations for all your media players
-2. **Browse Available Media Players**: The UI shows all media players from Home Assistant in a dropdown and list
-3. **Select from Dropdown**: When creating a location, select a media player from the dropdown instead of typing
-
-### Using SQL (Advanced)
-
-If you prefer to manage the database directly:
-
-#### View all intents:
-```sql
-SELECT * FROM intent;
-```
-
-#### View all locations:
-```sql
-SELECT * FROM location;
-```
-
-#### Add new intent:
-```sql
-INSERT INTO intent (name, playlist) VALUES ('workout', 'spotify:user:spotify:playlist:YOUR_PLAYLIST_ID');
-```
-
-#### Add new location:
-```sql
-INSERT INTO location (name, speaker_entity) VALUES ('office', 'media_player.office_speaker');
-```
-
-#### Update existing intent:
-```sql
-UPDATE intent SET playlist = 'spotify:user:spotify:playlist:NEW_ID' WHERE name = 'christmas';
-```
-
-#### Update existing location:
-```sql
-UPDATE location SET speaker_entity = 'media_player.new_speaker' WHERE name = 'garage';
-```
-
-### Using the API
-
-#### Sync locations from Home Assistant:
-```bash
-curl -X POST http://localhost:8080/api/sync-locations
-```
-
-#### Get all media players from Home Assistant:
-```bash
-curl http://localhost:8080/api/media-players
-```
+See the `examples/` directory for more integration patterns.
 
 ## Docker Deployment
 
-Create a `Dockerfile`:
-
-```dockerfile
-FROM golang:1.21-alpine AS builder
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN go build -o music-coordinator
-
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates sqlite
-WORKDIR /app
-COPY --from=builder /app/music-coordinator .
-COPY --from=builder /app/init_db.sql .
-EXPOSE 8080
-CMD ["./music-coordinator"]
+```bash
+docker-compose up -d
 ```
 
-Build and run:
+Or build and run manually:
+
 ```bash
 docker build -t music-coordinator .
 docker run -d \
   -p 8080:8080 \
-  -v $(pwd)/music_coordinator.db:/app/music_coordinator.db \
+  -v $(pwd)/data:/data \
+  -e MQTT_BROKER="tcp://your-mqtt-broker:1883" \
   -e HA_API_TOKEN="your-token" \
   -e HA_URL="http://homeassistant.local:8123" \
   music-coordinator
@@ -425,31 +224,49 @@ docker run -d \
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `8082` | HTTP server port (for web UI) |
+| `PORT` | `8080` | HTTP server port |
 | `DB_PATH` | `./music_coordinator.db` | SQLite database file path |
-| `MQTT_BROKER` | `tcp://localhost:1883` | MQTT broker URL (required) |
-| `MQTT_USER` | `` | MQTT username (optional) |
-| `MQTT_PASS` | `` | MQTT password (optional) |
+| `MQTT_BROKER` | `tcp://localhost:1883` | MQTT broker URL |
+| `MQTT_USER` | | MQTT username (optional) |
+| `MQTT_PASS` | | MQTT password (optional) |
 | `MQTT_CLIENT_ID` | `music-coordinator` | MQTT client ID |
-| `HA_URL` | `https://ha.bryanwp.com` | Home Assistant base URL (only needed for media player sync) |
-| `HA_API_TOKEN` | `` | Home Assistant long-lived access token (only needed for media player sync) |
-| `MA_API_URL` | `http://192.168.2.245:8097` | Music Assistant API URL (currently unused) |
+| `HA_URL` | `http://homeassistant.local:8123` | Home Assistant URL (for media player sync) |
+| `HA_API_TOKEN` | | Home Assistant long-lived access token (for media player sync) |
+| `MA_API_URL` | `http://localhost:8097` | Music Assistant API URL (reserved for future use) |
+
+## Development
+
+This project uses [mise](https://mise.jdx.dev/) for tool management and [hk](https://hk.jdx.dev/) for git hooks.
+
+```bash
+# Install tools
+mise install
+
+# Install git hooks
+hk install
+
+# Available tasks
+mise run build     # Build the binary
+mise run run       # Build and run
+mise run test      # Run tests
+mise run fmt       # Format code
+mise run lint      # Run go vet
+mise run clean     # Remove build artifacts
+```
 
 ## Troubleshooting
 
 ### "Intent not found" error
-- Check that the intent exists in the database: `SELECT * FROM intent WHERE name = 'your_intent';`
-- Ensure the intent name matches exactly (case-sensitive)
+- Check that the intent exists: `sqlite3 music_coordinator.db "SELECT * FROM intent;"`
+- Intent names are case-sensitive
 
 ### "Location not found" error
-- Check that the location exists: `SELECT * FROM location WHERE name = 'your_location';`
-- Ensure the location name matches exactly (case-sensitive)
+- Check that the location exists: `sqlite3 music_coordinator.db "SELECT * FROM location;"`
+- Location names are case-sensitive
 
-### "Failed to play music" error
-- Verify Home Assistant API token is correct
-- Check that the speaker entity ID exists in Home Assistant
-- Ensure Music Assistant (mass) integration is properly configured
-- Check Home Assistant logs for more details
+### MQTT connection issues
+- Verify `MQTT_BROKER` is set correctly (include `tcp://` prefix)
+- Check broker is reachable and credentials are correct
 
 ### Database locked errors
 - Ensure only one instance of the coordinator is running
@@ -458,4 +275,3 @@ docker run -d \
 ## License
 
 MIT
-

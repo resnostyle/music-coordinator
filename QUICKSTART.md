@@ -2,9 +2,10 @@
 
 ## Prerequisites
 
-1. **Go 1.21+** installed
+1. [mise](https://mise.jdx.dev/) (recommended) or **Go 1.23+** installed
 2. **Home Assistant** with Music Assistant (mass) integration configured
-3. **Home Assistant API Token** - Create one at: Profile → Long-lived access tokens → Create Token
+3. **MQTT broker** (e.g., Mosquitto) accessible to both Home Assistant and this service
+4. **Home Assistant API Token** (optional, for media player sync) -- Create at: Profile → Long-lived access tokens → Create Token
 
 ## Setup Steps
 
@@ -12,30 +13,35 @@
 
 ```bash
 cd music-coordinator
+
+# Using mise (recommended)
+mise install
+
+# Or manually
 go mod download
 ```
 
 ### 2. Set Environment Variables
 
 ```bash
-export HA_API_TOKEN="your-long-lived-access-token-here"
-export HA_URL="http://homeassistant.local:8123"  # Adjust to your HA URL
-export PORT="8080"  # Optional, defaults to 8080
+export MQTT_BROKER="tcp://localhost:1883"
+export HA_API_TOKEN="your-long-lived-access-token-here"  # Optional, for media player sync
+export HA_URL="http://homeassistant.local:8123"           # Optional, for media player sync
+export PORT="8080"                                        # Optional, defaults to 8080
 ```
 
 ### 3. Build and Run
 
 ```bash
-# Build
+# Using mise
+mise run build
+mise run run
+
+# Or manually
 go build -o music-coordinator .
-
-# Run
 ./music-coordinator
-```
 
-Or use Make:
-```bash
-make build
+# Or use Make
 make run
 ```
 
@@ -66,22 +72,41 @@ Open your browser and navigate to:
 http://localhost:8080/
 ```
 
-You'll see a simple web interface where you can:
+You'll see a web interface where you can:
 - View all intents and locations
 - Add new intents and locations
 - Edit existing entries
 - Delete entries
-
-No need to manually edit the database anymore!
+- Sync locations from Home Assistant
 
 ### 7. Configure Home Assistant
 
-Add to `configuration.yaml`:
+Using MQTT (recommended), add an automation:
+
+```yaml
+automation:
+  - alias: "Play Christmas Music"
+    trigger:
+      - platform: state
+        entity_id: input_boolean.christmas_mode
+        to: 'on'
+    action:
+      - service: mqtt.publish
+        data:
+          topic: "music-coordinator/play"
+          payload: |
+            {
+              "intent": "christmas",
+              "location": "garage"
+            }
+```
+
+Or using REST command, add to `configuration.yaml`:
 
 ```yaml
 rest_command:
   play_music_intent:
-    url: "http://localhost:8080/play"  # Adjust if running on different host
+    url: "http://music-coordinator:8080/api/play"
     method: POST
     headers:
       Content-Type: "application/json"
@@ -92,7 +117,7 @@ rest_command:
       }
 ```
 
-Then create an automation (see `examples/homeassistant_automation.yaml`):
+Then use in automations (see `examples/` for more patterns):
 
 ```yaml
 automation:
@@ -108,48 +133,22 @@ automation:
           location: "garage"
 ```
 
-## Database Management
-
-### View all intents:
-```bash
-sqlite3 music_coordinator.db "SELECT * FROM intent;"
-```
-
-### View all locations:
-```bash
-sqlite3 music_coordinator.db "SELECT * FROM location;"
-```
-
-### Add new intent:
-```bash
-sqlite3 music_coordinator.db "INSERT INTO intent (name, playlist) VALUES ('workout', 'spotify:playlist:YOUR_ID');"
-```
-
-### Add new location:
-```bash
-sqlite3 music_coordinator.db "INSERT INTO location (name, speaker_entity) VALUES ('office', 'media_player.office');"
-```
-
 ## Docker Deployment
 
 ```bash
-# Build
-docker build -t music-coordinator .
+# Using docker-compose
+export HA_API_TOKEN="your-token"
+docker-compose up -d
 
-# Run
+# Or manually
+docker build -t music-coordinator .
 docker run -d \
   -p 8080:8080 \
   -v $(pwd)/data:/data \
+  -e MQTT_BROKER="tcp://your-mqtt-broker:1883" \
   -e HA_API_TOKEN="your-token" \
   -e HA_URL="http://homeassistant.local:8123" \
   music-coordinator
-```
-
-Or use docker-compose:
-```bash
-# Set HA_API_TOKEN in .env or export it
-export HA_API_TOKEN="your-token"
-docker-compose up -d
 ```
 
 ## Troubleshooting
@@ -162,14 +161,12 @@ docker-compose up -d
 - Check database: `sqlite3 music_coordinator.db "SELECT * FROM location;"`
 - Ensure location name matches exactly (case-sensitive)
 
-### "Failed to play music" error
-- Verify HA_API_TOKEN is correct
-- Check speaker entity exists in Home Assistant
-- Verify Music Assistant integration is configured
-- Check Home Assistant logs
+### MQTT connection issues
+- Verify `MQTT_BROKER` is set correctly (include `tcp://` prefix)
+- Check broker is reachable and credentials are correct
+- Check coordinator logs for connection errors
 
 ### Service won't start
 - Check port 8080 is not in use: `lsof -i :8080`
-- Verify Go is installed: `go version`
-- Check environment variables are set: `echo $HA_API_TOKEN`
-
+- Verify Go is installed: `go version` (or use `mise install`)
+- Check environment variables are set

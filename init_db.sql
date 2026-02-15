@@ -1,12 +1,12 @@
 -- Initialize database with example data
 -- Run this after the service creates the schema
 
--- Example intents
+-- Example intents (replace playlist URIs with your own)
 INSERT OR IGNORE INTO intent (name, playlist) VALUES
-    ('christmas', 'spotify:user:spotify:playlist:37i9dQZF1DXdd3gw5QVjt9'),
-    ('saturday_morning', 'spotify:user:spotify:playlist:37i9dQZF1DX3Ogo9pFvBkY'),
-    ('sunday_morning', 'spotify:user:klovespotify:playlist:2Od4HqROiraxI93i7Q4ZQ2'),
-    ('leaving_alert', 'spotify:user:spotify:playlist:37i9dQZF1DWWi0hHcPHnic');
+    ('christmas', 'spotify:playlist:YOUR_CHRISTMAS_PLAYLIST_ID'),
+    ('saturday_morning', 'spotify:playlist:YOUR_SATURDAY_PLAYLIST_ID'),
+    ('sunday_morning', 'spotify:playlist:YOUR_SUNDAY_PLAYLIST_ID'),
+    ('leaving_alert', 'spotify:playlist:YOUR_ALERT_PLAYLIST_ID');
 
 -- Example locations
 INSERT OR IGNORE INTO location (name, speaker_entity) VALUES

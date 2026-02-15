@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -19,9 +19,10 @@ RUN apk --no-cache add ca-certificates sqlite
 
 WORKDIR /app
 
-# Copy binary and init script
+# Copy binary, init script, and web UI
 COPY --from=builder /app/music-coordinator .
 COPY --from=builder /app/init_db.sql .
+COPY --from=builder /app/ui ./ui
 
 # Create directory for database
 RUN mkdir -p /data
